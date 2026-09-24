@@ -1,0 +1,496 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>احفظ حقك</title>
+<style>
+*{box-sizing:border-box}body{margin:0;background:#eef1f3;font-family:Arial,sans-serif;color:#17212b}
+.app{max-width:430px;margin:auto;min-height:100vh;background:#fff;position:relative;overflow:hidden}
+.splash{position:absolute;inset:0;z-index:5;background:#17212b;color:white;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:28px;transition:.4s}
+.logo{width:82px;height:82px;border-radius:24px;background:#fff;color:#17212b;display:grid;place-items:center;font-size:34px;font-weight:bold;margin-bottom:20px}
+.splash h1{font-size:30px;margin:0 0 22px}.ayah{font-size:21px;line-height:2.1}.source{font-size:13px;opacity:.75;margin-top:10px}.start{margin-top:28px;border:0;border-radius:14px;padding:14px 55px;background:#fff;color:#17212b;font-size:17px;font-weight:bold}
+header{padding:24px 20px 20px;background:#17212b;color:#fff;border-radius:0 0 25px 25px}
+h1{margin:0;font-size:25px}.sub{opacity:.75;margin-top:5px;font-size:14px}.cards{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:20px}
+.card{background:#fff;color:#17212b;border-radius:16px;padding:15px}.card small{color:#737e88}.num{font-size:21px;font-weight:bold;margin-top:7px}
+main{padding:20px}.bar{display:flex;justify-content:space-between;align-items:center}.bar h2{font-size:18px;margin:0}
+.add{border:0;background:#17212b;color:#fff;border-radius:12px;padding:10px 14px;font-size:14px}
+.person{display:flex;align-items:center;gap:12px;padding:14px 0;border-bottom:1px solid #eee}.avatar{width:44px;height:44px;border-radius:50%;background:#e8edf0;display:grid;place-items:center;font-weight:bold}.info{flex:1}.name{font-weight:bold}.meta{font-size:12px;color:#89929b;margin-top:4px}.debt{font-weight:bold}
+.empty{text-align:center;color:#8b949e;padding:35px 5px}
+nav{position:sticky;bottom:0;background:white;border-top:1px solid #eee;display:flex;justify-content:space-around;padding:12px}nav button{border:0;background:none;color:#737e88}nav .active{color:#17212b;font-weight:bold}
+.modal{display:none;position:fixed;inset:0;background:#0008;z-index:10;align-items:flex-end;justify-content:center}.sheet{background:#fff;width:min(430px,100%);padding:22px;border-radius:24px 24px 0 0}.sheet h2{margin-top:0}.field{width:100%;padding:13px;border:1px solid #ddd;border-radius:12px;margin:7px 0 12px;font-size:16px}.save{width:100%;padding:14px;border:0;border-radius:13px;background:#17212b;color:white;font-size:16px}.cancel{width:100%;padding:12px;border:0;background:none}
+</style>
+</head>
+<body>
+<div class="app">
+<section class="splash" id="splash">
+<div class="logo">ح</div><h1>احفظ حقك</h1>
+<div class="ayah">﴿يَا أَيُّهَا الَّذِينَ آمَنُوا إِذَا تَدَايَنتُم بِدَيْنٍ إِلَىٰ أَجَلٍ مُّسَمًّى فَاكْتُبُوهُ﴾</div>
+<div class="source">سورة البقرة — الآية 282</div>
+<button class="start" onclick="startApp()">ابدأ</button>
+</section>
+<header><h1>احفظ حقك</h1><div class="sub">سجّل ديونك وتابع السداد بسهولة</div>
+<div class="cards"><div class="card"><small>لي</small><div class="num" id="mine">0 ج.س</div></div><div class="card"><small>عليّ</small><div class="num" id="owe">0 ج.س</div></div></div></header>
+<main><div class="bar"><h2>الديون</h2><button class="add" onclick="openModal()">+ إضافة دين</button></div><div id="list" class="empty">لا توجد ديون مسجلة حالياً<br><br>ابدأ بإضافة أول دين.</div></main>
+<nav><button class="active">الرئيسية</button><button onclick="showPeople()">الأشخاص</button><button onclick="showReport()">التقارير</button><button onclick="settings()">الإعدادات</button></nav>
+<div class="modal" id="peopleModal"><div class="sheet"><h2>الأشخاص</h2><div id="peopleList"></div><button class="cancel" onclick="document.getElementById('peopleModal').style.display='none'">إغلاق</button></div></div>
+<div class="modal" id="reportModal"><div class="sheet"><h2>التقرير</h2><div id="reportText" style="line-height:2"></div><button class="cancel" onclick="document.getElementById('reportModal').style.display='none'">إغلاق</button></div></div>
+</div>
+
+<div class="modal" id="modal"><div class="sheet">
+<h2>إضافة دين</h2>
+<input class="field" id="name" placeholder="اسم الشخص">
+<input class="field" id="phone" type="tel" placeholder="رقم التلفون (اختياري)">
+<input class="field" id="amount" type="number" placeholder="المبلغ بالجنيه السوداني">
+<input class="field" id="reason" placeholder="سبب الدين (اختياري)">
+<button class="save" onclick="saveDebt()">حفظ الدين</button><button class="cancel" onclick="closeModal()">إلغاء</button>
+</div></div>
+<div class="modal" id="settingsModal"><div class="sheet"><h2>الإعدادات</h2>
+<button class="save" onclick="backupData()">💾 حفظ نسخة احتياطية</button>
+<button class="save" style="margin-top:10px" onclick="document.getElementById('importFile').click()">📥 استرجاع نسخة احتياطية</button>
+<input id="importFile" type="file" accept=".json" style="display:none" onchange="importData(event)">
+<button class="cancel" onclick="clearData()">🗑️ حذف كل البيانات</button>
+<button class="cancel" onclick="document.getElementById('settingsModal').style.display='none'">إغلاق</button>
+</div></div>
+<div class="modal" id="detailModal"><div class="sheet"><h2>كشف الحساب</h2><div id="detailText" style="line-height:2"></div><button class="save" id="shareBtn" style="margin-top:10px">مشاركة الكشف</button><button class="cancel" onclick="document.getElementById('detailModal').style.display='none'">إغلاق</button></div></div>
+<script>
+let debts=JSON.parse(localStorage.getItem('ahfaz_haq_debts')||'[]');
+function persist(){localStorage.setItem('ahfaz_haq_debts',JSON.stringify(debts))}
+function fmt(n){return Number(n).toLocaleString('ar-EG')+' ج.س'}
+function pay(i){
+ const d=debts[i], left=d.amount-d.paid;
+ const v=Number(prompt('المبلغ المدفوع (المتبقي '+fmt(left)+')'));
+ if(!v||v<0||v>left){if(v!==0) alert('المبلغ غير صحيح');return}
+ d.paid+=v; d.payments=d.payments||[]; d.payments.push({amount:v,date:new Date().toLocaleDateString('ar-SD')}); persist(); render();
+}
+function removeDebt(i){
+ if(confirm('حذف هذا الدين؟')){debts.splice(i,1);persist();render()}
+}
+function startApp(){document.getElementById('splash').style.display='none'}
+function backupData(){
+ const blob=new Blob([JSON.stringify(debts,null,2)],{type:'application/json'});
+ const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='احفظ_حقك_نسخة_احتياطية.json';a.click();
+ URL.revokeObjectURL(a.href);
+}
+function clearData(){
+ if(confirm('هل تريد حذف كل البيانات؟ لا يمكن التراجع عن ذلك.')){
+  debts=[];persist();render();alert('تم حذف البيانات');
+ }
+}
+function settings(){
+ document.getElementById('settingsModal').style.display='flex';
+}
+function openModal(){document.getElementById('modal').style.display='flex'}
+function closeModal(){document.getElementById('modal').style.display='none'}
+function saveDebt(){
+ const name=document.getElementById('name').value.trim(), amount=Number(document.getElementById('amount').value), reason=document.getElementById('reason').value.trim();
+ if(!name||!amount){alert('اكتب اسم الشخص والمبلغ');return}
+ debts.push({name,phone:document.getElementById('phone').value.trim(),amount,reason,paid:0,date:new Date().toLocaleDateString('ar-SD'),payments:[]}); persist(); render(); closeModal();
+ document.getElementById('name').value='';document.getElementById('phone').value='';document.getElementById('amount').value='';document.getElementById('reason').value='';
+}
+function importData(e){
+ const file=e.target.files[0]; if(!file)return;
+ const reader=new FileReader();
+ reader.onload=()=>{try{
+   const data=JSON.parse(reader.result);
+   if(!Array.isArray(data)) throw new Error();
+   debts=data;persist();render();alert('تم استرجاع البيانات بنجاح');
+ }catch(err){alert('ملف النسخة الاحتياطية غير صالح');}};
+ reader.readAsText(file);
+ e.target.value='';
+}
+function shareDebt(d){
+ const payments=(d.payments||[]).map((x,k)=>`دفعة ${k+1}: ${fmt(x.amount)} - ${x.date}`).join('\n');
+ const msg=`احفظ حقك\nكشف حساب: ${d.name}\nإجمالي الدين: ${fmt(d.amount)}\nالمدفوع: ${fmt(d.paid)}\nالمتبقي: ${fmt(d.amount-d.paid)}\nتاريخ الدين: ${d.date||''}${payments?'\n\nالدفعات:\n'+payments:''}`;
+ if(d.phone){
+   const phone=d.phone.replace(/\D/g,'');
+   window.open('https://wa.me/'+phone+'?text='+encodeURIComponent(msg),'_blank');
+ }else if(navigator.share){
+   navigator.share({title:'احفظ حقك - كشف حساب',text:msg});
+ }else{
+   navigator.clipboard?.writeText(msg); alert('تم نسخ كشف الحساب. أرسل النص عبر واتساب.');
+ }
+}
+function details(i){
+ const d=debts[i], payments=d.payments||[];
+ let html=`<b>${d.name}</b><br>تاريخ الدين: ${d.date||'غير مسجل'}<br>إجمالي الدين: ${fmt(d.amount)}<br>المدفوع: ${fmt(d.paid)}<br>المتبقي: <b>${fmt(d.amount-d.paid)}</b><hr>`;
+ if(!payments.length) html+='لا توجد دفعات مسجلة بعد.';
+ else html+='<b>الدفعات:</b>'+payments.map((x,k)=>`<div style="padding:8px 0;border-bottom:1px solid #eee">دفعة ${k+1}: ${fmt(x.amount)} — ${x.date}</div>`).join('');
+ html=`رقم التلفون: ${d.phone||'غير مسجل'}<br>`+html;
+ document.getElementById('detailText').innerHTML=html;
+ document.getElementById('shareBtn').onclick=()=>shareDebt(d);
+ document.getElementById('detailModal').style.display='flex';
+}
+function showPeople(){
+ const box=document.getElementById('peopleList');
+ if(!debts.length){box.innerHTML='<div class="empty">لا يوجد أشخاص مسجلون.</div>'}
+ else {
+  const m={};
+  debts.forEach(d=>{if(!m[d.name])m[d.name]={total:0,paid:0};m[d.name].total+=d.amount;m[d.name].paid+=d.paid});
+  box.innerHTML=Object.entries(m).map(([n,v])=>`<div class="person"><div class="avatar">${n[0]}</div><div class="info"><div class="name">${n}</div><div class="meta">إجمالي: ${fmt(v.total)} • مدفوع: ${fmt(v.paid)}</div></div><div class="debt">${fmt(v.total-v.paid)}</div></div>`).join('');
+ }
+ document.getElementById('peopleModal').style.display='flex';
+}
+function showReport(){
+ const total=debts.reduce((a,d)=>a+d.amount,0), paid=debts.reduce((a,d)=>a+d.paid,0);
+ document.getElementById('reportText').innerHTML=`عدد الديون: <b>${debts.length}</b><br>إجمالي الديون: <b>${fmt(total)}</b><br>إجمالي المدفوع: <b>${fmt(paid)}</b><br>إجمالي المتبقي: <b>${fmt(total-paid)}</b>`;
+ document.getElementById('reportModal').style.display='flex';
+}
+function render(){
+ const list=document.getElementById('list');
+ document.getElementById('mine').textContent=debts.reduce((a,d)=>a+(d.amount-d.paid),0).toLocaleString('ar-EG')+' ج.س';
+ if(!debts.length){list.className='empty';list.innerHTML='لا توجد ديون مسجلة حالياً<br><br>ابدأ بإضافة أول دين.';return}
+ list.className='';
+ list.innerHTML=debts.map((d,i)=>{
+ d.paid=d.paid||0; const left=d.amount-d.paid;
+ return `<div class="person">
+ <div class="avatar">${d.name[0]}</div>
+ <div class="info"><div class="name">${d.name}</div>
+ <div class="meta">${d.reason||'دين مسجل'} • المدفوع: ${fmt(d.paid)}</div></div>
+ <div><div class="debt">${fmt(left)}</div>
+ <button onclick="pay(${i})" style="margin-top:6px;border:0;border-radius:9px;padding:7px 10px;background:#17212b;color:#fff">سداد</button>
+ <button onclick="removeDebt(${i})" style="margin-top:6px;border:0;border-radius:9px;padding:7px 8px;background:#eee">حذف</button></div>
+ </div>`}).join('');
+}
+render();
+</script>
+
+<script>
+(function(){
+  const LANGS = {
+    ar:{name:"العربية", dir:"rtl", t:{
+      language:"اللغة",currency:"العملة",save:"حفظ",cancel:"إلغاء",settings:"الإعدادات",
+      backup:"حفظ نسخة احتياطية",restore:"استرجاع نسخة احتياطية",deleteAll:"حذف كل البيانات",
+      close:"إغلاق",share:"مشاركة الكشف",paid:"المدفوع",remaining:"المتبقي",
+      totalDebt:"إجمالي الدين",totalPaid:"إجمالي المدفوع",totalRemaining:"إجمالي المتبقي"
+    }},
+    en:{name:"English",dir:"ltr",t:{
+      language:"Language",currency:"Currency",save:"Save",cancel:"Cancel",settings:"Settings",
+      backup:"Backup",restore:"Restore",deleteAll:"Delete all data",close:"Close",share:"Share statement",
+      paid:"Paid",remaining:"Remaining",totalDebt:"Total debt",totalPaid:"Total paid",totalRemaining:"Total remaining"
+    }},
+    fr:{name:"Français",dir:"ltr",t:{
+      language:"Langue",currency:"Devise",save:"Enregistrer",cancel:"Annuler",settings:"Paramètres",
+      backup:"Sauvegarder",restore:"Restaurer",deleteAll:"Supprimer toutes les données",close:"Fermer",
+      share:"Partager le relevé",paid:"Payé",remaining:"Restant",totalDebt:"Dette totale",totalPaid:"Total payé",totalRemaining:"Total restant"
+    }},
+    tr:{name:"Türkçe",dir:"ltr",t:{
+      language:"Dil",currency:"Para birimi",save:"Kaydet",cancel:"İptal",settings:"Ayarlar",
+      backup:"Yedekle",restore:"Geri yükle",deleteAll:"Tüm verileri sil",close:"Kapat",share:"Ekstreyi paylaş",
+      paid:"Ödenen",remaining:"Kalan",totalDebt:"Toplam borç",totalPaid:"Toplam ödenen",totalRemaining:"Toplam kalan"
+    }},
+    es:{name:"Español",dir:"ltr",t:{
+      language:"Idioma",currency:"Moneda",save:"Guardar",cancel:"Cancelar",settings:"Ajustes",
+      backup:"Copia de seguridad",restore:"Restaurar",deleteAll:"Eliminar todos los datos",close:"Cerrar",
+      share:"Compartir estado de cuenta",paid:"Pagado",remaining:"Restante",totalDebt:"Deuda total",totalPaid:"Total pagado",totalRemaining:"Total restante"
+    }}
+  };
+  const CUR = {
+    SDG:"جنيه سوداني (SDG)",USD:"دولار أمريكي (USD)",SAR:"ريال سعودي (SAR)",
+    AED:"درهم إماراتي (AED)",EGP:"جنيه مصري (EGP)",GBP:"جنيه إسترليني (GBP)",EUR:"يورو (EUR)"
+  };
+  const lang = localStorage.getItem("ahfaz_lang") || "ar";
+  const currency = localStorage.getItem("ahfaz_currency") || "SDG";
+  localStorage.setItem("ahfaz_lang",lang);
+  localStorage.setItem("ahfaz_currency",currency);
+
+  window.AHFAZ_SETTINGS = {
+    languages: LANGS, currencies: CUR,
+    getLang(){return localStorage.getItem("ahfaz_lang")||"ar"},
+    getCurrency(){return localStorage.getItem("ahfaz_currency")||"SDG"},
+    setLang(v){if(LANGS[v]){localStorage.setItem("ahfaz_lang",v);this.apply();}},
+    setCurrency(v){if(CUR[v]){localStorage.setItem("ahfaz_currency",v);this.apply();}},
+    labelCurrency(v){return CUR[v]||v},
+    apply(){
+      const l=this.getLang(), d=LANGS[l]||LANGS.ar;
+      document.documentElement.lang=l; document.documentElement.dir=d.dir;
+      document.querySelectorAll("[data-i18n]").forEach(el=>{
+        const k=el.getAttribute("data-i18n"); if(d.t[k]) el.textContent=d.t[k];
+      });
+      const ls=document.querySelector("#ahfaz-language-select"); if(ls) ls.value=l;
+      const cs=document.querySelector("#ahfaz-currency-select"); if(cs) cs.value=this.getCurrency();
+    },
+    addDebtCurrency(debt){
+      if(!debt.currency) debt.currency=this.getCurrency();
+      return debt;
+    }
+  };
+
+  function addSettingsUI(){
+    if(document.querySelector("#ahfaz-multi-settings")) return;
+    const box=document.createElement("div");
+    box.id="ahfaz-multi-settings";
+    box.style.cssText="margin:16px 0;padding:14px;border-radius:14px;background:#f5f5f5;border:1px solid #ddd";
+    box.innerHTML=`
+      <div style="font-weight:700;margin-bottom:10px">🌍 ${LANGS[lang].t.language} & 💱 ${LANGS[lang].t.currency}</div>
+      <label style="display:block;margin:8px 0">${LANGS[lang].t.language}</label>
+      <select id="ahfaz-language-select" style="width:100%;padding:10px;border-radius:10px">
+        ${Object.entries(LANGS).map(([k,v])=>`<option value="${k}">${v.name}</option>`).join("")}
+      </select>
+      <label style="display:block;margin:12px 0 8px">${LANGS[lang].t.currency}</label>
+      <select id="ahfaz-currency-select" style="width:100%;padding:10px;border-radius:10px">
+        ${Object.entries(CUR).map(([k,v])=>`<option value="${k}">${v}</option>`).join("")}
+      </select>
+      <div style="font-size:12px;color:#666;margin-top:10px">
+        ${lang==="ar"?"كل دين جديد يُحفظ بالعملة المختارة وقت تسجيله، ولا يتم تحويل العملات تلقائياً.":"Each new debt keeps the currency selected when it is recorded; currencies are not converted automatically."}
+      </div>`;
+    const settings=document.querySelector("#settings") || document.querySelector('[id*="setting"]') || document.body;
+    settings.appendChild(box);
+    document.querySelector("#ahfaz-language-select").onchange=e=>AHFAZ_SETTINGS.setLang(e.target.value);
+    document.querySelector("#ahfaz-currency-select").onchange=e=>AHFAZ_SETTINGS.setCurrency(e.target.value);
+  }
+
+  window.addEventListener("DOMContentLoaded",()=>{
+    addSettingsUI(); AHFAZ_SETTINGS.apply();
+    // Backward compatibility: old debt records get SDG if no currency is stored.
+    try{
+      ["debts","ahfaz_debts","people"].forEach(key=>{
+        const raw=localStorage.getItem(key); if(!raw)return;
+        const data=JSON.parse(raw);
+        if(Array.isArray(data)){
+          data.forEach(x=>{if(x && typeof x==="object" && !x.currency)x.currency="SDG";});
+          localStorage.setItem(key,JSON.stringify(data));
+        }
+      });
+    }catch(e){}
+  });
+})();
+</script>
+
+
+<script>
+(function(){
+  const oldFormat = window.formatAmount;
+  window.AHFAZ_MONEY = {
+    symbols:{SDG:"ج.س",USD:"$",SAR:"ر.س",AED:"د.إ",EGP:"ج.م",GBP:"£",EUR:"€"},
+    format(amount,currency){
+      currency=currency||localStorage.getItem("ahfaz_currency")||"SDG";
+      const n=Number(amount)||0;
+      try { return new Intl.NumberFormat(document.documentElement.lang||"ar",{maximumFractionDigits:2}).format(n)+" "+(this.symbols[currency]||currency); }
+      catch(e){ return n+" "+(this.symbols[currency]||currency); }
+    },
+    group(items){
+      const out={};
+      (items||[]).forEach(d=>{
+        const c=d.currency||"SDG";
+        if(!out[c]) out[c]={debt:0,paid:0,remaining:0,count:0};
+        const debt=Number(d.amount||d.total||0)||0;
+        const paid=Number(d.paid||d.totalPaid||0)||0;
+        out[c].debt+=debt; out[c].paid+=paid; out[c].remaining+=Math.max(0,debt-paid); out[c].count++;
+      });
+      return out;
+    }
+  };
+})();
+</script>
+
+
+<script>
+(function(){
+  const STYLE_ID="ahfaz-v3-style";
+  if(!document.getElementById(STYLE_ID)){
+    const st=document.createElement("style"); st.id=STYLE_ID;
+    st.textContent=`
+      #ahfaz-tools{display:flex;gap:8px;flex-wrap:wrap;margin:12px 0}
+      #ahfaz-search{flex:1;min-width:180px;padding:11px;border:1px solid #ddd;border-radius:12px}
+      .ahfaz-reminder{background:#fff8e1;border:1px solid #f0d98a;padding:10px;border-radius:12px;margin:8px 0;font-size:13px}
+      .ahfaz-due{font-weight:700}
+    `; document.head.appendChild(st);
+  }
+  function findList(){return document.querySelector("#debts-list")||document.querySelector("#debtList")||document.querySelector(".debts-list")||document.body;}
+  function readDebts(){
+    for(const k of ["debts","ahfaz_debts"]){
+      try{const v=JSON.parse(localStorage.getItem(k)||"null"); if(Array.isArray(v)) return v;}catch(e){}
+    }
+    return [];
+  }
+  function addTools(){
+    if(document.getElementById("ahfaz-tools")) return;
+    const list=findList(), wrap=document.createElement("div"); wrap.id="ahfaz-tools";
+    wrap.innerHTML='<input id="ahfaz-search" placeholder="🔎 بحث باسم الشخص أو رقم الهاتف..."><button id="ahfaz-reminders">🔔 المستحقات</button>';
+    list.parentNode.insertBefore(wrap,list);
+    document.getElementById("ahfaz-search").oninput=e=>{
+      const q=e.target.value.trim().toLowerCase();
+      document.querySelectorAll("[data-debt-name]").forEach(el=>{
+        el.style.display=!q||el.getAttribute("data-debt-name").toLowerCase().includes(q)?"":"none";
+      });
+    };
+    document.getElementById("ahfaz-reminders").onclick=()=>{
+      const debts=readDebts();
+      const due=debts.filter(d=>Number(d.amount||0)>Number(d.paid||d.totalPaid||0));
+      alert(due.length?`لديك ${due.length} حساب/حسابات عليها مبلغ متبقٍ.`:"ما في ديون متبقية حالياً.");
+    };
+  }
+  window.addEventListener("DOMContentLoaded",addTools);
+})();
+</script>
+
+
+<script>
+(function(){
+  if(window.AHFAZ_PRO_READY)return; window.AHFAZ_PRO_READY=true;
+  const css=document.createElement("style");
+  css.textContent=`
+  .ahfaz-pro{margin:14px 0;padding:14px;border:1px solid #ddd;border-radius:16px;background:#fff}
+  .ahfaz-pro h3{margin:0 0 10px}.ahfaz-row{display:flex;gap:8px;flex-wrap:wrap}
+  .ahfaz-btn{border:0;border-radius:11px;padding:10px 13px;cursor:pointer}
+  .ahfaz-btn:active{transform:scale(.98)}
+  .ahfaz-modal{position:fixed;inset:0;background:#0008;display:flex;align-items:center;justify-content:center;z-index:9999;padding:15px}
+  .ahfaz-card{background:#fff;max-width:520px;width:100%;max-height:90vh;overflow:auto;border-radius:18px;padding:18px}
+  .ahfaz-statement{font-family:system-ui;line-height:1.8}
+  .ahfaz-statement .line{border-bottom:1px solid #eee;padding:5px 0}
+  `;
+  document.head.appendChild(css);
+
+  function debts(){
+    for(const k of ["debts","ahfaz_debts"]){
+      try{let x=JSON.parse(localStorage.getItem(k)||"null");if(Array.isArray(x))return x}catch(e){}
+    } return [];
+  }
+  function save(ds){
+    const key=localStorage.getItem("ahfaz_debts")!==null?"ahfaz_debts":"debts";
+    localStorage.setItem(key,JSON.stringify(ds));
+  }
+  function money(n,c){
+    const sym={SDG:"ج.س",USD:"$",SAR:"ر.س",AED:"د.إ",EGP:"ج.م",GBP:"£",EUR:"€"};
+    return Number(n||0).toLocaleString(document.documentElement.lang==="ar"?"ar":"en",{maximumFractionDigits:2})+" "+(sym[c]||c||"SDG");
+  }
+  function statement(d){
+    const paid=Number(d.paid||d.totalPaid||0), amount=Number(d.amount||d.total||0), rem=Math.max(0,amount-paid);
+    return `احفظ حقك\n\nالشخص: ${d.name||"—"}\nالهاتف: ${d.phone||"—"}\nالدين: ${money(amount,d.currency)}\nالمدفوع: ${money(paid,d.currency)}\nالمتبقي: ${money(rem,d.currency)}\nالسبب: ${d.reason||"—"}\nالتاريخ: ${d.date||new Date().toLocaleDateString()}`;
+  }
+  function openStatement(i){
+    const d=debts()[i]; if(!d)return;
+    const paid=Number(d.paid||d.totalPaid||0), amount=Number(d.amount||d.total||0), rem=Math.max(0,amount-paid);
+    const m=document.createElement("div");m.className="ahfaz-modal";
+    m.innerHTML=`<div class="ahfaz-card"><div class="ahfaz-statement">
+      <h2 style="margin-top:0">📄 كشف الحساب</h2>
+      <div class="line"><b>الشخص:</b> ${d.name||"—"}</div>
+      <div class="line"><b>الهاتف:</b> ${d.phone||"—"}</div>
+      <div class="line"><b>الدين:</b> ${money(amount,d.currency)}</div>
+      <div class="line"><b>المدفوع:</b> ${money(paid,d.currency)}</div>
+      <div class="line"><b>المتبقي:</b> ${money(rem,d.currency)}</div>
+      <div class="line"><b>السبب:</b> ${d.reason||"—"}</div>
+      <div class="line"><b>التاريخ:</b> ${d.date||"—"}</div>
+      </div><div class="ahfaz-row" style="margin-top:14px">
+      <button class="ahfaz-btn" id="ahfaz-share">📤 مشاركة</button>
+      <button class="ahfaz-btn" id="ahfaz-copy">📋 نسخ</button>
+      <button class="ahfaz-btn" id="ahfaz-close">إغلاق</button></div></div>`;
+    document.body.appendChild(m);
+    const txt=statement(d);
+    m.querySelector("#ahfaz-copy").onclick=async()=>{try{await navigator.clipboard.writeText(txt);alert("تم نسخ الكشف");}catch(e){alert(txt)}};
+    m.querySelector("#ahfaz-share").onclick=async()=>{
+      if(navigator.share){try{await navigator.share({title:"كشف حساب - احفظ حقك",text:txt});}catch(e){}}
+      else{try{await navigator.clipboard.writeText(txt);alert("تم نسخ الكشف للمشاركة");}catch(e){alert(txt)}}
+    };
+    m.querySelector("#ahfaz-close").onclick=()=>m.remove();
+  }
+  function addStatementButtons(){
+    document.querySelectorAll("[data-debt-index]").forEach(el=>{
+      if(el.querySelector(".ahfaz-statement-btn"))return;
+      const i=Number(el.getAttribute("data-debt-index")), b=document.createElement("button");
+      b.className="ahfaz-btn ahfaz-statement-btn";b.textContent="📄 كشف الحساب";b.onclick=()=>openStatement(i);
+      el.appendChild(b);
+    });
+  }
+  window.AHFAZ_STATEMENT={open:openStatement,read:debts};
+  window.addEventListener("DOMContentLoaded",()=>setTimeout(addStatementButtons,300));
+})();
+</script>
+
+
+<script>
+(function(){
+  if(window.AHFAZ_FINAL_LAYER)return; window.AHFAZ_FINAL_LAYER=true;
+  const css=document.createElement("style");
+  css.textContent=`
+    .ahfaz-paybox{margin-top:12px;padding:12px;border:1px solid #ddd;border-radius:14px}
+    .ahfaz-paybox input,.ahfaz-paybox select{padding:9px;border:1px solid #ccc;border-radius:9px;margin:4px}
+    .ahfaz-history{margin-top:10px;font-size:13px}
+    .ahfaz-history div{padding:7px;border-bottom:1px solid #eee}
+    .ahfaz-empty{color:#777;padding:8px}
+  `;
+  document.head.appendChild(css);
+
+  function getKey(){
+    return localStorage.getItem("ahfaz_debts")!==null?"ahfaz_debts":"debts";
+  }
+  function read(){
+    try{const x=JSON.parse(localStorage.getItem(getKey())||"[]");return Array.isArray(x)?x:[]}catch(e){return[]}
+  }
+  function write(x){localStorage.setItem(getKey(),JSON.stringify(x));}
+
+  window.AHFAZ_PAYMENTS={
+    add(index,amount,note){
+      const ds=read(),d=ds[index]; if(!d)return false;
+      amount=Number(amount); if(!amount||amount<=0)return false;
+      const paid=Number(d.paid||d.totalPaid||0);
+      d.payments=Array.isArray(d.payments)?d.payments:[];
+      d.payments.push({amount,note:note||"",date:new Date().toISOString()});
+      d.paid=paid+amount;
+      d.totalPaid=d.paid;
+      write(ds); return true;
+    },
+    history(index){return read()[index]?.payments||[]}
+  };
+
+  function enhance(){
+    document.querySelectorAll("[data-debt-index]").forEach(el=>{
+      if(el.querySelector(".ahfaz-paybox"))return;
+      const i=Number(el.getAttribute("data-debt-index")), ds=read(), d=ds[i]; if(!d)return;
+      const box=document.createElement("div");box.className="ahfaz-paybox";
+      box.innerHTML=`<b>💰 تسجيل سداد</b><br>
+        <input class="ahfaz-pay-amount" type="number" min="0" step="0.01" placeholder="مبلغ السداد">
+        <input class="ahfaz-pay-note" placeholder="ملاحظة (اختياري)">
+        <button class="ahfaz-btn ahfaz-pay-save">حفظ السداد</button>
+        <div class="ahfaz-history"><b>📜 سجل الدفعات</b><div class="hist"></div></div>`;
+      el.appendChild(box);
+      const render=()=>{
+        const h=box.querySelector(".hist"), arr=read()[i]?.payments||[];
+        h.innerHTML=arr.length?arr.slice().reverse().map(x=>`<div>${new Date(x.date).toLocaleDateString()} — ${Number(x.amount).toLocaleString()} ${d.currency||"SDG"}${x.note?" — "+x.note:""}</div>`).join(""):'<div class="ahfaz-empty">لا توجد دفعات مسجلة</div>';
+      };
+      box.querySelector(".ahfaz-pay-save").onclick=()=>{
+        const a=box.querySelector(".ahfaz-pay-amount").value,n=box.querySelector(".ahfaz-pay-note").value;
+        if(window.AHFAZ_PAYMENTS.add(i,a,n)){box.querySelector(".ahfaz-pay-amount").value="";box.querySelector(".ahfaz-pay-note").value="";render();alert("تم تسجيل السداد");}
+        else alert("أدخل مبلغ سداد صحيح");
+      };
+      render();
+    });
+  }
+  window.addEventListener("DOMContentLoaded",()=>setTimeout(enhance,500));
+})();
+</script>
+
+
+<script>
+(function(){
+  if(window.AHFAZ_RELEASE)return; window.AHFAZ_RELEASE=true;
+
+  window.AHFAZ_APP={
+    version:"1.0.0",
+    name:"احفظ حقك",
+    setTheme(mode){
+      localStorage.setItem("ahfaz_theme",mode);
+      document.documentElement.dataset.theme=mode;
+    },
+    getTheme(){return localStorage.getItem("ahfaz_theme")||"light"},
+    exportData(){
+      const keys=["debts","ahfaz_debts","ahfaz_lang","ahfaz_currency","ahfaz_theme"];
+      const data={};
+      keys.forEach(k=>{const v=localStorage.getItem(k);if(v!==null)data[k]=v});
+      const blob=new Blob([JSON.stringify({app:"احفظ حقك",version:"1.0.0",data},null,2)],{type:"application/json"});
+      const a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download="ahfaz-haqqak-backup.json";a.click();
+      setTimeout(()=>URL.revokeObjectURL(a.href),1000);
+    },
+    async importData(file){
+      const obj=JSON.parse(await file.text());
+      if(!obj || obj.app!=="احفظ حقك" || !obj.data) throw new Error("invalid");
+      Object.entries(obj.data).forEach(([k,v])=>localStorage.setItem(k,v));
+      location.reload();
+    }
+  };
+
+  document.documentElement.dataset.theme=window.AHFAZ_APP.getTheme();
+})();
+</script>
+
+</body></html>
